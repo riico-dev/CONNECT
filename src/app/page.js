@@ -1,16 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState("");
   const [items, setItems] = useState([]);
 
-  function handleAdd(e) {
+useEffect(() => {
+  async function load() {
+    const { data, error } = await supabase
+      .from("wishes")
+      .select("*")
+      .order("created_at", { ascending: true});
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    setItems(data);
+  }
+
+  load();
+},[]);
+
+  async function handleAdd(e) {
     e. preventDefault();
     if (text === "")return;
-    setItems([...items, text])
+
+    const { data, error } = await supabase
+       .from("wishes")
+       .insert({title: text })
+       .select();
+
+    if (error) {
+      console.log(error);
+      return;
+    } 
+
+  setItems([...items, data[0]]);
     setText("");
     setIsOpen(false);
   }
@@ -37,7 +67,7 @@ export default function Home() {
 
       <ul>
         {items.map((item, index) => (
-          <li key={index}>{item}</li>
+          <li key={item.id}>{item.title}</li>
         ))}
       </ul>
     </main>
